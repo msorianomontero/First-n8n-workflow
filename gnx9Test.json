@@ -42,7 +42,7 @@
       "name": "Search records",
       "credentials": {
         "airtableTokenApi": {
-          "id": "aAu6Rr8dyTQEQ53y",
+          "id": "INSERT-YOUR-API-HERE",
           "name": "Website Monitoring Airtable"
         }
       }
@@ -118,7 +118,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer fc-e90e1089bdfa4bcf80bb208f37d45edd"
+              "value": "Bearer USE-YOUR-FIRECRAWL-API-HERE"
             }
           ]
         },
