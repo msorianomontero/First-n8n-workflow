@@ -1,0 +1,406 @@
+{
+  "name": "gnx9Test",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        64
+      ],
+      "id": "7f551f4e-2d20-4df1-826a-9f70b0ba2ebc",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "app8b4LuoTy8iHCoA",
+          "mode": "list",
+          "cachedResultName": "Website Monitoring",
+          "cachedResultUrl": "https://airtable.com/app8b4LuoTy8iHCoA"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblGK9Ft7dhGN0XLh",
+          "mode": "list",
+          "cachedResultName": "Websites",
+          "cachedResultUrl": "https://airtable.com/app8b4LuoTy8iHCoA/tblGK9Ft7dhGN0XLh"
+        },
+        "filterByFormula": "{Monitoring}=\"Active\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -176,
+        -32
+      ],
+      "id": "678bbf44-639d-4065-b836-10fa747755ad",
+      "name": "Search records",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "aAu6Rr8dyTQEQ53y",
+          "name": "Website Monitoring Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1,
+                3,
+                5
+              ],
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        -176
+      ],
+      "id": "b15e41ce-65b1-4df9-bd8f-0297606ba028",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=URL to Monitor: {{ $json['URL to Monitor'] }}\nPage ID: {{ $json.id }}",
+        "options": {
+          "systemMessage": "=# Website Monitoring Agent Prompt\n\nYou are a website monitoring agent responsible for detecting changes on web pages. Your primary function is to compare the current state of a webpage with its previously stored version and report any differences found.\n\n## Your Process\n\nWhen you receive a URL to monitor, follow these steps in order:\n\n### 1. Retrieve Previous Page Contents\n- Use your **Retrieve Last Scraped Page Contents** tool with the page ID to get the previously stored version\n- If no previous version exists, note this is the first monitoring session for this page\n\n### 2. Retrieve Current Page Contents\n- Use your **Get Page Contents** tool to fetch the current contents of the provided URL\n- The content will be returned in Markdown format\n- Store this content for comparison and later saving\n\n### 3. Compare and Analyze\nPerform a thorough comparison between the current and previous versions:\n\n#### Content Changes to Detect:\n- **Text modifications**: Added, removed, or edited text content\n- **Structural changes**: New sections, removed sections, reordered content\n- **Link changes**: New links added, links removed, or link destinations changed\n- **Image changes**: New images, removed images, or changed image sources/alt text\n- **Metadata changes**: Page titles, descriptions, or other metadata modifications\n\n#### Changes to Ignore:\n- Minor formatting differences that don't affect content meaning\n- Timestamp updates (unless specifically monitoring for timestamp changes)\n- Dynamic elements like view counters or \"last updated\" timestamps (unless relevant)\n- Whitespace-only changes\n\n### 4. Report Findings\n\n#### If NO changes detected:\n✅ **No Changes Detected**\nPage: [URL]\nLast checked: [Current timestamp: {{ $now.toString() }}]\nStatus: Content remains unchanged since last monitoring session.\n\n#### If changes ARE detected:\n🔄 **Changes Detected**\nPage: [URL]\nLast checked: [Current timestamp: {{ $now.toString() }}]\n\n**Summary of Changes:**\n- [Brief summary of what changed]\n\n**Detailed Changes:**\n\n**Added Content:**\n- [List new content that appeared]\n\n**Removed Content:**\n- [List content that was removed]\n\n**Modified Content:**\n- [List content that was changed, showing before/after if helpful]\n\n**Structural Changes:**\n- [Note any changes to page organization or layout]\n\n### 5. Save Outcome of the Check\n- Use your **Save Outcome** tool to store:\n   - The current page contents (the Markdown you retrieved in step 2)\n   - The Last Run Outcome either \"No Change\" or \"Change Detected\"\n   - The Last Run Notes which should be the Report Findings from above\n- This updates the monitoring baseline for the next comparison\n- Include the page ID and all the current Markdown content\n- This ensures the next monitoring session will compare against today's version\n\n## Important Guidelines\n\n### Accuracy Requirements:\n- Be precise in identifying changes - avoid false positives\n- Focus on meaningful content changes rather than cosmetic formatting\n- Clearly distinguish between additions, removals, and modifications\n\n### Comparison Best Practices:\n- Compare content semantically, not just character-by-character\n- Look for relocated content (moved from one section to another)\n- Identify changes in context and meaning, not just text differences\n\n### Response Format:\n- Always start with a clear status indicator (✅ for no changes, 🔄 for changes detected)\n- Provide actionable information about what specifically changed\n- Use clear, concise language that non-technical users can understand\n- Include the URL and timestamp for record-keeping\n\n### Edge Cases to Handle:\n- **First monitoring session**: Report that this is the initial scan and baseline has been established\n- **Page unavailable**: Report if the page returns errors or is inaccessible\n- **Significant restructuring**: Note when the page has been completely redesigned\n- **Partial loading**: Identify if the page appears to have loaded incompletely\n\n## Error Handling\n\nIf you encounter issues:\n- **Tool failures**: Report which tool failed and suggest retrying\n- **Network errors**: Note connectivity issues and recommend checking again later\n- **Invalid URLs**: Inform that the provided URL is not accessible\n- **Parsing errors**: Report if the Markdown conversion encountered issues\n\n## Example Interaction\n\n**Input:** \"Monitor https://example.com/news\"\n\n**Your Response Process:**\n1. Call Retrieve Last Scraped Page Contents tool with the page ID\n2. Call Get Page Contents tool with the URL\n3. Compare the results and provide a detailed report following the format above\n4. Call Save Outcome tool with the current Markdown content to update the baseline\n\nRemember: Your goal is to be a reliable, accurate change detector that helps users stay informed about modifications to important web pages. Focus on meaningful changes that users would actually care about, and present your findings in a clear, actionable format.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        -32
+      ],
+      "id": "45dc8fb9-b0fc-477b-9f58-2e38b9ec043b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        176
+      ],
+      "id": "f0ecca56-5df6-41e2-b798-e68abdc04f18",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "7PRvFNwrruR7ISeo",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v2/scrape",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer fc-e90e1089bdfa4bcf80bb208f37d45edd"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $('Search records').item.json['URL to Monitor'] }}\",\n  \"onlyMainContent\": true,\n  \"maxAge\": 0,\n  \"parsers\": [\n    \"pdf\"\n  ],\n  \"formats\": [\n    \"markdown\"\n  ]\n} ",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        336,
+        160
+      ],
+      "id": "2305a0e4-8b65-4aae-ad91-13aa33cc2f8e",
+      "name": "Get Page Contents"
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "app8b4LuoTy8iHCoA",
+          "mode": "list",
+          "cachedResultName": "Website Monitoring",
+          "cachedResultUrl": "https://airtable.com/app8b4LuoTy8iHCoA"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblGK9Ft7dhGN0XLh",
+          "mode": "list",
+          "cachedResultName": "Websites",
+          "cachedResultUrl": "https://airtable.com/app8b4LuoTy8iHCoA/tblGK9Ft7dhGN0XLh"
+        },
+        "id": "={{ $json.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        48,
+        240
+      ],
+      "id": "853def33-2f48-4463-8194-6108d5b63a18",
+      "name": "Retrieve Last Scraped Page Contents",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "aAu6Rr8dyTQEQ53y",
+          "name": "Website Monitoring Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "app8b4LuoTy8iHCoA",
+          "mode": "list",
+          "cachedResultName": "Website Monitoring",
+          "cachedResultUrl": "https://airtable.com/app8b4LuoTy8iHCoA"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblGK9Ft7dhGN0XLh",
+          "mode": "list",
+          "cachedResultName": "Websites",
+          "cachedResultUrl": "https://airtable.com/app8b4LuoTy8iHCoA/tblGK9Ft7dhGN0XLh"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "{{ $json.id }}",
+            "Website Markdown Content": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Website_Markdown_Content', `Always save the complete markdown that you received from your Get Page `, 'string') }}",
+            "Last Run Outcome": "={{$fromAI(\"last_run_outcome\", \"Single Select value either 'No Change' or 'Change Detected'\")}}",
+            "Last Run Notes": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Last_Run_Notes', `Only fill if Change detected, otherwise No Change`, 'string') }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "URL to Monitor",
+              "displayName": "URL to Monitor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Monitoring",
+              "displayName": "Monitoring",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Active",
+                  "value": "Active"
+                },
+                {
+                  "name": "Inactive",
+                  "value": "Inactive"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Website Markdown Content",
+              "displayName": "Website Markdown Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Run Outcome",
+              "displayName": "Last Run Outcome",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "No Change",
+                  "value": "No Change"
+                },
+                {
+                  "name": "Change Detected",
+                  "value": "Change Detected"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Run Notes",
+              "displayName": "Last Run Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        224
+      ],
+      "id": "694ef123-d34d-4694-8df7-1e07ca639c4a",
+      "name": "Save Outcome",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "aAu6Rr8dyTQEQ53y",
+          "name": "Website Monitoring Airtable"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Get Page Contents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Last Scraped Page Contents": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Outcome": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a976879c-666c-4d5e-87f7-1e9c98e5e0be",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6aa298fee37dcd6c69297070e895bcc34ee770705e7a29ab866a868bf6ac5db9"
+  },
+  "id": "QQoMzmyGdo9Dc83P",
+  "tags": []
+}
